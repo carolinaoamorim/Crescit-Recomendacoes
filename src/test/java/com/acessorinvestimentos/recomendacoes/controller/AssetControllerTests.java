@@ -25,6 +25,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -75,7 +78,7 @@ public class AssetControllerTests {
     public void test_shouldCreateAsset() throws Exception {
         AssetDto dto = createAssetDto("PETR4", RiskLevel.MEDIUM);
 
-        mockMvc.perform(post("/assets")
+        mockMvc.perform(post("/assets").with(admin())
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
@@ -93,7 +96,7 @@ public class AssetControllerTests {
         Mockito.when(investorProfileClient.getInvestorProfile("auth0|123"))
                 .thenReturn(new ProfileResponseDto("auth0|123", InvestorType.MODERATE));
 
-        mockMvc.perform(post("/recommendations/{userId}/generate", "auth0|123"))
+        mockMvc.perform(post("/recommendations/{userId}/generate", "auth0|123").with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", Matchers.hasSize(2)))
                 .andExpect(jsonPath("$[0].userId").value("auth0|123"));
@@ -104,17 +107,24 @@ public class AssetControllerTests {
         createAsset("ITUB4", RiskLevel.MEDIUM);
         createAsset("TESOURO", RiskLevel.LOW);
 
-        mockMvc.perform(get("/assets"))
+        mockMvc.perform(get("/assets").with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", Matchers.hasSize(2)));
     }
 
     private void createAsset(String ticker, RiskLevel riskLevel) throws Exception {
         AssetDto dto = createAssetDto(ticker, riskLevel);
-        mockMvc.perform(post("/assets")
+        mockMvc.perform(post("/assets").with(admin())
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated());
+    }
+
+    private RequestPostProcessor admin() {
+        return jwt().jwt(token -> token.subject("auth0|123")).authorities(
+                new SimpleGrantedAuthority("read:assets"),
+                new SimpleGrantedAuthority("write:assets"),
+                new SimpleGrantedAuthority("write:recommendations"));
     }
 
     private AssetDto createAssetDto(String ticker, RiskLevel riskLevel) {
