@@ -22,6 +22,9 @@
 # Build output
 target/
 tests/
+.env
+.env.*
+!.env.example
 
 # IDE files
 .idea/

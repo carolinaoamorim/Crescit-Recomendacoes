@@ -3,6 +3,8 @@ name: Java CI with Maven
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -11,25 +13,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 25
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
+          java-version: '17'
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B verify --file pom.xml
 
       - name: Login to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           username: "larinhazzz"
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -38,16 +43,27 @@ jobs:
           tags: larinhazzz/recomendacoes-ci:${{ github.sha }}
 
       - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@master
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v1
+        env:
+          AUTH0_ISSUER: ${{ vars.AUTH0_ISSUER || 'https://dev-s41b58hqkvvmdu13.us.auth0.com/' }}
+          AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE || 'https://api.acessor-investimentos' }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL || 'http://localhost:5173' }}
         with:
           host: ${{ secrets.HOST_TEST }}
           username: "ubuntu"
           key: ${{ secrets.KEY_TEST }}
           port: 22
+          envs: AUTH0_ISSUER,AUTH0_AUDIENCE,FRONTEND_URL
           script: |
-            docker stop recomendacoes
-            docker rm --force recomendacoes
-            docker run  -d -p 8081:8080 --name recomendacoes larinhazzz/recomendacoes-ci:${{ github.sha }}
+            set -e
+            IMAGE="larinhazzz/recomendacoes-ci:${{ github.sha }}"
+            docker pull "$IMAGE"
+            docker stop recomendacoes || true
+            docker rm recomendacoes || true
+            docker run -d -p 8081:8080 --name recomendacoes \
+              -e AUTH0_ISSUER -e AUTH0_AUDIENCE -e FRONTEND_URL \
+              "$IMAGE"
 
 
 

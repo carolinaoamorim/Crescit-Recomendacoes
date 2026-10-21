@@ -13,6 +13,7 @@ import com.acessorinvestimentos.recomendacoes.exception.RecomendacaoException;
 import com.acessorinvestimentos.recomendacoes.repository.AssetRepository;
 import com.acessorinvestimentos.recomendacoes.repository.RecommendationRepository;
 import com.acessorinvestimentos.recomendacoes.strategy.ModerateRecommendationStrategy;
+import com.acessorinvestimentos.recomendacoes.strategy.ConservativeRecommendationStrategy;
 import com.acessorinvestimentos.recomendacoes.strategy.RecommendationStrategyFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -94,6 +95,24 @@ public class RecommendationServiceTests {
     }
 
     @Test
+    public void test_shouldGenerateFromProfileEventWithoutCallingProtectedProfileApi() {
+        String userId = "auth0|event-user";
+        List<Asset> assets = List.of(createAsset("CDB001", RiskLevel.LOW));
+
+        Mockito.when(assetRepository.findByActiveTrue()).thenReturn(assets);
+        Mockito.when(strategyFactory.getStrategy(InvestorType.CONSERVATIVE))
+                .thenReturn(new ConservativeRecommendationStrategy());
+        Mockito.when(recommendationRepository.saveAll(Mockito.anyList()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<RecommendationResponseDto> response =
+                recommendationService.generateRecommendations(userId, InvestorType.CONSERVATIVE);
+
+        Assertions.assertEquals(1, response.size());
+        Mockito.verifyNoInteractions(investorProfileClient);
+    }
+
+    @Test
     public void test_shouldDeleteOldRecommendations() {
         recommendationService.deleteOldRecommendations("auth0|789");
 
@@ -103,6 +122,8 @@ public class RecommendationServiceTests {
     @Test
     public void test_shouldRejectInvalidUserId() {
         assertThrows(RecomendacaoException.class, () -> recommendationService.generateRecommendations(null));
+        assertThrows(RecomendacaoException.class,
+                () -> recommendationService.generateRecommendations("auth0|123", null));
         assertThrows(RecomendacaoException.class, () -> recommendationService.getRecommendationsByUserId(" "));
         assertThrows(RecomendacaoException.class, () -> recommendationService.deleteOldRecommendations(""));
         Mockito.verifyNoInteractions(recommendationRepository, assetRepository, investorProfileClient, strategyFactory);

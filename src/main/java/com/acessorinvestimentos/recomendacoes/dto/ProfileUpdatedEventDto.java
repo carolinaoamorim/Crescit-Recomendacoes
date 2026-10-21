@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -14,5 +14,5 @@ public class ProfileUpdatedEventDto {
     private String eventType;
     private String userId;
     private InvestorType investorType;
-    private LocalDateTime occurredAt;
+    private Instant occurredAt;
 }
