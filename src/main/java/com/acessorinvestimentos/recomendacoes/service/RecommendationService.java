@@ -4,6 +4,7 @@ import com.acessorinvestimentos.recomendacoes.client.InvestorProfileClient;
 import com.acessorinvestimentos.recomendacoes.dto.ProfileResponseDto;
 import com.acessorinvestimentos.recomendacoes.dto.RecommendationResponseDto;
 import com.acessorinvestimentos.recomendacoes.entity.Asset;
+import com.acessorinvestimentos.recomendacoes.entity.InvestorType;
 import com.acessorinvestimentos.recomendacoes.entity.Recommendation;
 import com.acessorinvestimentos.recomendacoes.exception.RecomendacaoException;
 import com.acessorinvestimentos.recomendacoes.repository.AssetRepository;
@@ -34,9 +35,25 @@ public class RecommendationService {
         validateUserId(userId);
 
         ProfileResponseDto profile = investorProfileClient.getInvestorProfile(userId);
+        return generateRecommendations(userId, profile.getInvestorType());
+    }
+
+    /**
+     * Gera recomendacoes a partir do tipo que ja veio no evento do Perfil.
+     * Eventos RabbitMQ nao possuem o access token de um usuario e, portanto,
+     * nao devem tentar chamar um endpoint protegido do servico de Perfil.
+     */
+    @Transactional
+    public List<RecommendationResponseDto> generateRecommendations(String userId, InvestorType investorType) {
+        validateUserId(userId);
+        if (investorType == null) {
+            throw new RecomendacaoException("InvestorType e obrigatorio");
+        }
+
+        ProfileResponseDto profile = new ProfileResponseDto(userId, investorType);
         List<Asset> assets = assetRepository.findByActiveTrue();
 
-        RecommendationStrategy strategy = strategyFactory.getStrategy(profile.getInvestorType());
+        RecommendationStrategy strategy = strategyFactory.getStrategy(investorType);
         List<Recommendation> recommendations = strategy.recommend(profile, assets);
 
         recommendationRepository.deleteByUserId(userId);

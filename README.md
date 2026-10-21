@@ -62,6 +62,10 @@ DB_NAME=recomendacoesdb
 DB_USER=postgres
 DB_PASSWORD=postgres
 PERFIL_SERVICE_URL=http://localhost:8081
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USERNAME=guest
+RABBITMQ_PASSWORD=guest
 ```
 
 Mantenha a barra final em `AUTH0_ISSUER`. O CORS aceita somente a origem
@@ -81,6 +85,11 @@ O Spring nao carrega `.env` automaticamente.
 Ao gerar recomendacoes, o servico encaminha o Bearer token para Perfil.
 O token precisa tambem de `read:profile`, e `PERFIL_SERVICE_URL` deve apontar
 para o servico de Perfil que valida o mesmo issuer/audience.
+
+Quando Perfil publica o evento `profile.updated`, este servico consome a fila
+`recommendations.profile-updated` e usa o `investorType` presente no evento.
+Esse fluxo automatico nao usa token de usuario e nao chama o endpoint protegido
+de Perfil.
 
 Para verificar o bloqueio sem token:
 
