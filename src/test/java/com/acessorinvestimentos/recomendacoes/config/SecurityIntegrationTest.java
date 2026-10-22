@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest({AssetController.class, RecommendationController.class, HealthController.class, HelloController.class})
 @Import(SecurityConfig.class)
 class SecurityIntegrationTest {
-    private static final String AUDIENCE = "https://api.acessor-investimentos";
+    private static final String AUDIENCE = "https://api.crescit-investimentos";
     private static final String USER = "auth0|user-123";
     private static final String BODY = """
             {"ticker":"TEST3","name":"Ativo teste","assetType":"STOCK",

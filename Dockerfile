@@ -22,7 +22,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 ENV AUTH0_ISSUER=https://dev-s41b58hqkvvmdu13.us.auth0.com/ \
-    AUTH0_AUDIENCE=https://api.acessor-investimentos \
+    AUTH0_AUDIENCE=https://api.crescit-investimentos \
     FRONTEND_URL=http://localhost:5173 \
     SERVER_PORT=8080
 

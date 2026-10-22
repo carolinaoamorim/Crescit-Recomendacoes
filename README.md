@@ -53,7 +53,7 @@ O arquivo `.env.example` contem todos os nomes usados pela aplicacao:
 
 ```properties
 AUTH0_ISSUER=https://dev-s41b58hqkvvmdu13.us.auth0.com/
-AUTH0_AUDIENCE=https://api.acessor-investimentos
+AUTH0_AUDIENCE=https://api.crescit-investimentos
 FRONTEND_URL=http://localhost:5173
 SERVER_PORT=8080
 DB_HOST=localhost
