@@ -127,6 +127,15 @@ Mantenha `SERVER_PORT=8080` no container; o exemplo publica a API na porta 8083 
 
 O workflow valida testes e cobertura em pull requests e pushes para `main`.
 Publicar a imagem e executar o deploy continuam restritos a push na `main`.
+Os comandos remotos ficam em `scripts/deploy.sh`. Antes de baixar a nova
+imagem, o script remove somente tags antigas de `larinhazzz/recomendacoes-ci`
+que nao sao usadas por nenhum container, inclusive containers parados.
+A imagem que sera implantada tambem e preservada se ja estiver no servidor.
+Essa limpeza preserva os volumes, os containers existentes e as imagens de
+outros repositorios. A substituicao do container atual so comeca depois que
+o download termina com sucesso. Execucoes deste workflow para a mesma branch
+sao serializadas para evitar deploys simultaneos do servico.
+
 O container recebe estas GitHub repository variables, com os padroes compartilhados:
 
 - `AUTH0_ISSUER`
@@ -137,6 +146,35 @@ Os secrets existentes `DOCKERHUB_TOKEN`, `HOST_TEST` e `KEY_TEST` continuam nece
 A porta externa do deploy foi mantida em 8081, como no workflow original;
 o container usa a porta 8080. Para a integracao futura, ajuste os enderecos dos
 servicos e `FRONTEND_URL` ao ambiente de destino.
+
+### Falta de espaco no servidor
+
+O erro `no space left on device` durante `docker pull`, ao extrair uma camada
+em `/var/lib/containerd`, acontece no servidor acessado por SSH. Nessa etapa,
+o build Maven e a publicacao da imagem no Docker Hub ja terminaram.
+
+O script registra uso do disco, inodes e `docker system df` antes da limpeza
+e repete o diagnostico se o download falhar. Esses dados aparecem no passo
+**Deploy Recommendations Service** do Actions. Se nao houver imagens antigas
+desse repositorio que possam ser removidas, sera necessario avaliar o uso
+do servidor e liberar espaco de recursos identificados ou ampliar o disco.
+A limpeza restrita deste servico nao garante espaco suficiente para o pull.
+
+Reexecutar um job antigo usa o workflow daquela execucao. Para aplicar esta
+correcao, o workflow e a pasta `scripts/` precisam estar publicados na `main`;
+o push inicia uma nova execucao. A recuperacao do servidor ainda precisa ser
+confirmada pelo resultado desse novo deploy.
+
+Os testes do script usam um Docker simulado, sem SSH nem Docker real:
+
+```bash
+sh -n scripts/deploy.sh
+bash scripts/test-deploy.sh
+```
+
+Eles verificam a limpeza restrita, a preservacao de imagens usadas por
+containers ativos ou parados, a primeira implantacao, falhas de pull e de
+inspecao/limpeza, e a rejeicao de imagens de outro repositorio.
 
 ## Testes
 

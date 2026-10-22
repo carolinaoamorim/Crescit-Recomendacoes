@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: recomendacoes-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
 
@@ -13,6 +17,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Validate deployment script
+        run: |
+          sh -n scripts/deploy.sh
+          bash scripts/test-deploy.sh
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -42,10 +50,11 @@ jobs:
           push: true
           tags: larinhazzz/recomendacoes-ci:${{ github.sha }}
 
-      - name: executing remote ssh commands using password
+      - name: Deploy Recommendations Service
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: appleboy/ssh-action@v1
         env:
+          IMAGE_TAG: larinhazzz/recomendacoes-ci:${{ github.sha }}
           AUTH0_ISSUER: ${{ vars.AUTH0_ISSUER || 'https://dev-s41b58hqkvvmdu13.us.auth0.com/' }}
           AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE || 'https://api.crescit-investimentos' }}
           FRONTEND_URL: ${{ vars.FRONTEND_URL || 'http://localhost:5173' }}
@@ -54,16 +63,8 @@ jobs:
           username: "ubuntu"
           key: ${{ secrets.KEY_TEST }}
           port: 22
-          envs: AUTH0_ISSUER,AUTH0_AUDIENCE,FRONTEND_URL
-          script: |
-            set -e
-            IMAGE="larinhazzz/recomendacoes-ci:${{ github.sha }}"
-            docker pull "$IMAGE"
-            docker stop recomendacoes || true
-            docker rm recomendacoes || true
-            docker run -d -p 8081:8080 --name recomendacoes \
-              -e AUTH0_ISSUER -e AUTH0_AUDIENCE -e FRONTEND_URL \
-              "$IMAGE"
+          envs: IMAGE_TAG,AUTH0_ISSUER,AUTH0_AUDIENCE,FRONTEND_URL
+          script_path: scripts/deploy.sh
 
 
 
