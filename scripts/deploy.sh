@@ -13,6 +13,13 @@ DB_PORT=${DB_PORT:-5432}
 DB_NAME=${DB_NAME:-recomendacoesdb}
 DB_USER=${DB_USER:-portfolio}
 export DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD
+PERFIL_SERVICE_URL=${PERFIL_SERVICE_URL:-http://perfilinvestidor:8080}
+runtime_env_file=${RABBITMQ_ENV_FILE:-/home/ubuntu/crescit-runtime/rabbitmq.env}
+if [ -r "$runtime_env_file" ]; then . "$runtime_env_file"; fi
+RABBITMQ_HOST=${RABBITMQ_HOST:-crescit-rabbitmq}
+RABBITMQ_USERNAME=${RABBITMQ_USERNAME:-crescit}
+RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+export PERFIL_SERVICE_URL RABBITMQ_HOST RABBITMQ_USERNAME RABBITMQ_PASSWORD
 
 REPOSITORY=larinhazzz/recomendacoes-ci
 case "$IMAGE_TAG" in
@@ -51,7 +58,7 @@ printf '%s\n' "$references" | while IFS= read -r reference; do
 done
 
 # Download completely before stopping the existing service.
-if ! docker pull "$IMAGE_TAG"; then
+if [ "${PULL_IMAGE:-true}" = true ] && ! docker pull "$IMAGE_TAG"; then
   echo 'Image download failed; the current service was not stopped.' >&2
   disk_usage
   echo 'If disk space is still exhausted, review the usage above or expand the server disk.' >&2
@@ -88,10 +95,12 @@ if docker container inspect recomendacoes >/dev/null 2>&1; then
   docker stop recomendacoes
   docker rm recomendacoes
 fi
-docker run -d -p 8081:8080 --name recomendacoes \
+docker run -d --name recomendacoes \
   --restart unless-stopped --network "$DOCKER_NETWORK" \
+  --log-opt max-size=10m --log-opt max-file=3 \
   -e AUTH0_ISSUER -e AUTH0_AUDIENCE -e FRONTEND_URL \
   -e DB_HOST -e DB_PORT -e DB_NAME -e DB_USER -e DB_PASSWORD \
+  -e PERFIL_SERVICE_URL -e RABBITMQ_HOST -e RABBITMQ_USERNAME -e RABBITMQ_PASSWORD \
   "$IMAGE_TAG"
 
 attempt=0

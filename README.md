@@ -167,9 +167,12 @@ O container de Recomendacoes entra nessa mesma rede e recebe todas as variaveis
 inicializacao ou timeout exibem os logs do container e falham o job.
 
 Os secrets existentes `DOCKERHUB_TOKEN`, `HOST_TEST` e `KEY_TEST` continuam necessarios.
-A porta externa do deploy foi mantida em 8081, como no workflow original;
-o container usa a porta 8080. Para a integracao futura, ajuste os enderecos dos
-servicos e `FRONTEND_URL` ao ambiente de destino.
+O container usa a porta 8080 na rede Docker, sem publicar uma porta HTTP no host.
+O proxy Caddy publica as tres APIs via HTTPS na porta externa 8081, que ja esta
+liberada na instancia. A porta 80 e usada para validar e renovar os certificados.
+`PERFIL_SERVICE_URL` usa `http://perfilinvestidor:8080` na rede interna.
+As credenciais do broker, quando configurado, sao carregadas do arquivo privado
+`/home/ubuntu/crescit-runtime/rabbitmq.env`.
 
 ### Falta de espaco no servidor
 
