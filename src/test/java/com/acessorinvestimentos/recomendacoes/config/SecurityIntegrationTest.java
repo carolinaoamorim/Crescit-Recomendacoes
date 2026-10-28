@@ -66,7 +66,6 @@ class SecurityIntegrationTest {
     static void properties(DynamicPropertyRegistry registry) {
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", SecurityIntegrationTest::issuer);
         registry.add("auth0.audience", () -> AUDIENCE);
-        registry.add("app.frontend-url", () -> "http://localhost:5173");
     }
 
     @AfterAll
@@ -247,11 +246,11 @@ class SecurityIntegrationTest {
 
     @Test
     void allowsFrontendPreflightWithoutToken() throws Exception {
-        mvc.perform(options("/assets").header(HttpHeaders.ORIGIN, "http://localhost:5173")
+        mvc.perform(options("/assets").header(HttpHeaders.ORIGIN, "https://crescit-frontend.vercel.app")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type"))
                 .andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "https://crescit-frontend.vercel.app"))
                 .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS));
     }
 
@@ -265,7 +264,7 @@ class SecurityIntegrationTest {
 
     @Test
     void rejectsUnsupportedCorsMethod() throws Exception {
-        mvc.perform(options("/assets").header(HttpHeaders.ORIGIN, "http://localhost:5173")
+        mvc.perform(options("/assets").header(HttpHeaders.ORIGIN, "https://crescit-frontend.vercel.app")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "DELETE"))
                 .andExpect(status().isForbidden());
     }

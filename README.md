@@ -54,7 +54,7 @@ O arquivo `.env.example` contem todos os nomes usados pela aplicacao:
 ```properties
 AUTH0_ISSUER=https://dev-s41b58hqkvvmdu13.us.auth0.com/
 AUTH0_AUDIENCE=https://api.crescit-investimentos
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=https://crescit-frontend.vercel.app
 SERVER_PORT=8080
 DB_HOST=localhost
 DB_PORT=5432
@@ -70,6 +70,7 @@ RABBITMQ_PASSWORD=guest
 
 Mantenha a barra final em `AUTH0_ISSUER`. O CORS aceita somente a origem
 definida em `FRONTEND_URL`, com os headers `Authorization` e `Content-Type`.
+Para desenvolvimento local, use `FRONTEND_URL=http://localhost:5173`.
 Nao ha sessao de login no backend; cada requisicao deve trazer seu Bearer token.
 
 Para rodar com Java 17 ou superior e Maven, inicie o PostgreSQL e execute:
@@ -142,6 +143,29 @@ O container recebe estas GitHub repository variables, com os padroes compartilha
 - `AUTH0_AUDIENCE`
 - `FRONTEND_URL`
 
+O deploy usa o PostgreSQL existente do Portfolio, em `portfolio-postgres:5432`,
+na rede Docker `portfolio-network`. Antes de substituir a aplicacao, o script
+verifica o banco e cria `recomendacoesdb` somente se ele ainda nao existir.
+O banco `portfolio` e seus dados sao preservados.
+
+Estas repository variables permitem ajustar a conexao no servidor:
+
+| Variavel | Padrao |
+| --- | --- |
+| `DOCKER_NETWORK` | `portfolio-network` |
+| `DB_HOST` | `portfolio-postgres` (nome do container PostgreSQL) |
+| `DB_PORT` | `5432` |
+| `DB_NAME` | `recomendacoesdb` |
+| `DB_USER` | `portfolio` |
+
+O secret `DB_PASSWORD` define a senha. Quando ausente, o workflow usa `portfolio`,
+o mesmo valor configurado no deploy atual do Portfolio. O usuario precisa ter
+permissao para criar o banco na primeira execucao.
+
+O container de Recomendacoes entra nessa mesma rede e recebe todas as variaveis
+`DB_*`. O deploy so conclui com sucesso quando `GET /health` responde; falhas de
+inicializacao ou timeout exibem os logs do container e falham o job.
+
 Os secrets existentes `DOCKERHUB_TOKEN`, `HOST_TEST` e `KEY_TEST` continuam necessarios.
 A porta externa do deploy foi mantida em 8081, como no workflow original;
 o container usa a porta 8080. Para a integracao futura, ajuste os enderecos dos
@@ -174,7 +198,9 @@ bash scripts/test-deploy.sh
 
 Eles verificam a limpeza restrita, a preservacao de imagens usadas por
 containers ativos ou parados, a primeira implantacao, falhas de pull e de
-inspecao/limpeza, e a rejeicao de imagens de outro repositorio.
+inspecao/limpeza, e a rejeicao de imagens de outro repositorio. Tambem cobrem
+a rede compartilhada, a configuracao e preparacao do banco, falhas dessas
+dependencias antes da substituicao e a verificacao de saude da aplicacao.
 
 ## Testes
 

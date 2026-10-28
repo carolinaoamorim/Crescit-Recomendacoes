@@ -57,13 +57,19 @@ jobs:
           IMAGE_TAG: larinhazzz/recomendacoes-ci:${{ github.sha }}
           AUTH0_ISSUER: ${{ vars.AUTH0_ISSUER || 'https://dev-s41b58hqkvvmdu13.us.auth0.com/' }}
           AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE || 'https://api.crescit-investimentos' }}
-          FRONTEND_URL: ${{ vars.FRONTEND_URL || 'http://localhost:5173' }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL || 'https://crescit-frontend.vercel.app' }}
+          DOCKER_NETWORK: ${{ vars.DOCKER_NETWORK || 'portfolio-network' }}
+          DB_HOST: ${{ vars.DB_HOST || 'portfolio-postgres' }}
+          DB_PORT: ${{ vars.DB_PORT || '5432' }}
+          DB_NAME: ${{ vars.DB_NAME || 'recomendacoesdb' }}
+          DB_USER: ${{ vars.DB_USER || 'portfolio' }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD || 'portfolio' }}
         with:
           host: ${{ secrets.HOST_TEST }}
           username: "ubuntu"
           key: ${{ secrets.KEY_TEST }}
           port: 22
-          envs: IMAGE_TAG,AUTH0_ISSUER,AUTH0_AUDIENCE,FRONTEND_URL
+          envs: IMAGE_TAG,AUTH0_ISSUER,AUTH0_AUDIENCE,FRONTEND_URL,DOCKER_NETWORK,DB_HOST,DB_PORT,DB_NAME,DB_USER,DB_PASSWORD
           script_path: scripts/deploy.sh
 
 

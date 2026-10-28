@@ -23,7 +23,7 @@ WORKDIR /app
 
 ENV AUTH0_ISSUER=https://dev-s41b58hqkvvmdu13.us.auth0.com/ \
     AUTH0_AUDIENCE=https://api.crescit-investimentos \
-    FRONTEND_URL=http://localhost:5173 \
+    FRONTEND_URL=https://crescit-frontend.vercel.app \
     SERVER_PORT=8080
 
 # Copy JAR from builder stage
