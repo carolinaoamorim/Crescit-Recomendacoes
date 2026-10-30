@@ -57,6 +57,30 @@ public class Asset {
     @Column
     private LocalDateTime lastPriceUpdate;
 
+    // Campos opcionais, usados por produtos de renda fixa e para explicar o ativo
+    // na tela de detalhe. Ficam nulos nos ativos de bolsa.
+
+    /** CDI_PERCENT, PREFIXED ou IPCA_PLUS (texto, igual ao RateType do Portfólio) */
+    @Column(length = 20)
+    private String rateType;
+
+    @Column(precision = 9, scale = 4)
+    private BigDecimal rateValue;
+
+    /** Ex.: "Diária", "No vencimento", "Após 90 dias" */
+    @Column(length = 40)
+    private String liquidity;
+
+    /** LCI e LCA são isentas de IR para pessoa física */
+    @Column
+    private Boolean taxExempt;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal minimumInvestment;
+
+    @Column(length = 500)
+    private String description;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -72,6 +96,12 @@ public class Asset {
         asset.setCurrentPrice(dto.getCurrentPrice());
         asset.setSector(dto.getSector());
         asset.setActive(dto.getActive() == null || dto.getActive());
+        asset.setRateType(dto.getRateType());
+        asset.setRateValue(dto.getRateValue());
+        asset.setLiquidity(dto.getLiquidity());
+        asset.setTaxExempt(dto.getTaxExempt());
+        asset.setMinimumInvestment(dto.getMinimumInvestment());
+        asset.setDescription(dto.getDescription());
         return asset;
     }
 

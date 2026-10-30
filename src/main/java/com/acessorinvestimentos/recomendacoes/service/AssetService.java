@@ -73,6 +73,24 @@ public class AssetService {
         if (dto.getActive() != null) {
             asset.setActive(dto.getActive());
         }
+        if (dto.getRateType() != null) {
+            asset.setRateType(dto.getRateType());
+        }
+        if (dto.getRateValue() != null) {
+            asset.setRateValue(dto.getRateValue());
+        }
+        if (dto.getLiquidity() != null) {
+            asset.setLiquidity(dto.getLiquidity());
+        }
+        if (dto.getTaxExempt() != null) {
+            asset.setTaxExempt(dto.getTaxExempt());
+        }
+        if (dto.getMinimumInvestment() != null) {
+            asset.setMinimumInvestment(dto.getMinimumInvestment());
+        }
+        if (dto.getDescription() != null) {
+            asset.setDescription(dto.getDescription());
+        }
 
         return assetRepository.save(asset);
     }
